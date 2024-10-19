@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo dõi/Hủy theo dõi</title>
+
+</head>
+
+<body>
+    <h1>Chức năng theo dõi/hủy theo dõi</h1>
+
+    <!-- Ô input để nhập tên người dùng A -->
+    <label for="usernameInput">Nhập tên người dùng A:</label>
+    <input type="text" id="usernameInput" placeholder="Nhập tên..." />
+
+    <!-- Nút kiểm tra -->
+    <button id="checkButton">Kiểm tra</button>
+
+    <!-- Nút theo dõi/hủy theo dõi sẽ hiển thị sau khi kiểm tra -->
+    <button id="followButton" style="display: none;"></button>
+
+    <!-- Danh sách những người đã theo dõi B -->
+    <h2>Những người đã theo dõi B:</h2>
+    <ul id="followerList"></ul>
+
+    <script>
+        // Danh sách followers ban đầu
+        let followers = ["user1", "user2", "user3"];
+        let followersOfB = [];  // Danh sách những người đã theo dõi B
+
+        // Lấy các phần tử HTML
+        const usernameInput = document.getElementById('usernameInput');
+        const checkButton = document.getElementById('checkButton');
+        const followButton = document.getElementById('followButton');
+        const followerList = document.getElementById('followerList');
+
+        // Hàm cập nhật danh sách những người đã theo dõi B
+        function updateFollowerList() {
+            followerList.innerHTML = '';  // Xóa danh sách hiện tại
+
+            followersOfB.forEach(follower => {
+                const li = document.createElement('li');
+                li.textContent = follower;
+                followerList.appendChild(li);
+            });
+        }
+
+        // Hàm kiểm tra và cập nhật nút theo dõi/hủy theo dõi
+        function checkFollowStatus() {
+            const username = usernameInput.value;  // Lấy tên từ input
+            const index = followers.indexOf(username);  // Kiểm tra xem có trong mảng không
+
+            if (index !== -1) {
+                // Nếu người dùng đã theo dõi, hiển thị nút hủy theo dõi
+                followButton.textContent = 'Hủy theo dõi';
+                followButton.style.display = 'inline-block';
+
+                // Khi click vào nút hủy theo dõi, xóa tên khỏi mảng followers và followersOfB
+                followButton.onclick = () => {
+                    followers.splice(index, 1);
+                    followersOfB = followersOfB.filter(follower => follower !== username); // Xóa tên A khỏi danh sách followersOfB
+                    alert(`${username} đã được hủy theo dõi.`);
+                    followButton.style.display = 'none';  // Ẩn nút sau khi hủy
+                    updateFollowerList();  // Cập nhật danh sách
+                };
+            } else {
+                // Nếu người dùng chưa theo dõi, hiển thị nút theo dõi
+                followButton.textContent = 'Theo dõi';
+                followButton.style.display = 'inline-block';
+
+                // Khi click vào nút theo dõi, thêm tên vào mảng followers và followersOfB
+                followButton.onclick = () => {
+                    followers.push(username);
+                    followersOfB.push(username);  // Thêm tên A vào danh sách followersOfB
+                    alert(`${username} đã được theo dõi.`);
+                    followButton.textContent = 'Hủy theo dõi';  // Đổi nút sang hủy theo dõi
+                    updateFollowerList();  // Cập nhật danh sách
+                };
+            }
+        }
+
+        // Gán sự kiện click cho nút kiểm tra
+        checkButton.onclick = checkFollowStatus;
+    </script>
+</body>
+
+</html>
