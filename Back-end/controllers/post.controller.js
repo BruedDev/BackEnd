@@ -7,43 +7,64 @@ import cloudinary from '../utils/cloudinary.js';
 //tạo bài viết
 export const newPost = async (req, res) => {
     try {
-        const { caption } = req.body;
+        const { caption } = req.body; // Đặt giá trị mặc định
         const img = req.file;
         const authorId = req.id;
+
+        // Validate input
         if (!img) {
-            return res.status(400).json({ message: "Không có hình ảnh nào được tải lên" });
+            return res.status(400).json({
+                success: false,
+                message: "Không có hình ảnh nào được tải lên"
+            });
         }
-        //sử dụng npm i sharp để tối ưu hóa hình ảnh
-        const optimizedImgAnhBuffer = await sharp(img.buffer)
+
+        // Optimize image
+        const optimizedImgBuffer = await sharp(img.buffer)
             .resize({ width: 500, height: 500, fit: 'inside' })
             .toFormat("jpeg", { quality: 80 })
             .toBuffer();
-        //lưu hình ảnh vào database
-        const fileUri = `data:image/jpeg;base64,${optimizedImgAnhBuffer.toString("base64")}`;
+
+        // Upload to cloudinary
+        const fileUri = `data:image/jpeg;base64,${optimizedImgBuffer.toString("base64")}`;
         const cloudinaryResponse = await cloudinary.uploader.upload(fileUri);
-        const post = await Post.create({
-            caption,
-            img: cloudinaryResponse.secure_url,
-            author: authorId
-        });
-        const user = await User.findById(authorId);
-        //lưu id của bài viết vào mảng posts của user
+
+        // Create post and update user in parallel
+        const [post, user] = await Promise.all([
+            Post.create({
+                caption,
+                img: cloudinaryResponse.secure_url,
+                author: authorId
+            }),
+            User.findById(authorId)
+        ]);
+
+        // Update user's posts array
         if (user) {
             user.posts.push(post._id);
             await user.save();
+        } else {
+            throw new Error("Không tìm thấy người dùng");
         }
-        //populate để lấy thông tin của tác giả. chúng liên thông với nhau trong db vì đã thêm trường ref
+
+        // Populate author info
         await post.populate({
             path: 'author',
             select: '-password'
-        })
+        });
+
         return res.status(201).json({
-            message: "Đăng bài thành công",
             success: true,
+            message: "Đăng bài thành công",
             post,
         });
+
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        console.error('Error in newPost:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Có lỗi xảy ra khi tạo bài viết"
+        });
     }
 };
 //lấy tất cả bài viết

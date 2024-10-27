@@ -1,7 +1,7 @@
 import express from 'express';
 import upload from '../middlewares/multer.js';
 import isAuth from '../middlewares/isAuth.middleware.js';
-import { addComment, bookmarkPost, deletePost, getAllPosts, likePost, newPost, unlikePost } from '../controllers/post.controller.js';
+import { addComment, bookmarkPost, deletePost, getAllPosts, likePost, newPost, unlikePost, getUserPosts } from '../controllers/post.controller.js';
 
 const router = express.Router();
 router.post('/newPost', isAuth, upload.single('img'), newPost);

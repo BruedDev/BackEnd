@@ -16,7 +16,7 @@ router.route('/:id/profile').get(isAuth, getProfile);
 router.post('/profile/edit', isAuth, upload.single('profilePicture'), setProfile);
 router.get('/suggested', isAuth, suggestedUser);
 router.get('/followofunfollow/:id', isAuth, followOrUnfollow);
-router.delete('/delete', isAuth, deleteAvatar);
+router.delete('/deleteAvatar', isAuth, deleteAvatar);
 router.post('/featuredNote', isAuth, postFeaturedNote);
 
 export default router;

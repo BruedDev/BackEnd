@@ -60,7 +60,6 @@ const userSchema = new mongoose.Schema({
     ],
     featuredNote: {
         type: mongoose.Schema.Types.ObjectId,
-        default: "",
         ref: 'Note',
     },
 }, { timestamps: true });
