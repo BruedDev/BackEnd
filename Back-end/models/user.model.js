@@ -57,7 +57,12 @@ const userSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Post',
         },
-    ]
+    ],
+    featuredNote: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: "",
+        ref: 'Note',
+    },
 }, { timestamps: true });
 
 // Khai báo biến User

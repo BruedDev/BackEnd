@@ -74,7 +74,7 @@ export const getAllPosts = async (req, res) => {
 export const getUserPosts = async (req, res) => {
     try {
         const authorId = req.id;
-        const posts = await Post.find('author', authorId).sort({ createdAt: -1 })
+        const posts = await Post.find({ author: authorId }).sort({ createdAt: -1 })
             .populate({ path: 'author', select: 'username, profilePicture' })
             .populate({
                 path: 'comments',

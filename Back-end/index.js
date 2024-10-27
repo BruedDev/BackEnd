@@ -21,8 +21,9 @@ app.use(express.json());
 app.use(cookieParser());
 //sử dụng urlencoded để lấy dữ liệu từ form
 app.use(urlencoded({ extended: true }));
+//cấu hình cors
 const corsOptions = {
-    origin: ['http://localhost:3000'], //chỉ cho phép các domain này gửi request
+    origin: ['http://localhost:3000' || 'https://localhost:3001'], //chỉ cho phép các domain này gửi request
     credentials: true                  //cho phép gửi cookie hoặc header xác thực
 };
 app.use(cors(corsOptions));

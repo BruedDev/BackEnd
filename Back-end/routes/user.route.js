@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProfile, setProfile, login, logout, register, suggestedUser, followOrUnfollow, home } from '../controllers/user.controller.js';
+import { getProfile, setProfile, login, logout, register, suggestedUser, followOrUnfollow, home, deleteAvatar, postFeaturedNote } from '../controllers/user.controller.js';
 
 import isAuth from '../middlewares/isAuth.middleware.js';
 import upload from '../middlewares/multer.js';
@@ -16,5 +16,7 @@ router.route('/:id/profile').get(isAuth, getProfile);
 router.post('/profile/edit', isAuth, upload.single('profilePicture'), setProfile);
 router.get('/suggested', isAuth, suggestedUser);
 router.get('/followofunfollow/:id', isAuth, followOrUnfollow);
+router.delete('/delete', isAuth, deleteAvatar);
+router.post('/featuredNote', isAuth, postFeaturedNote);
 
 export default router;

@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import getDatUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
+import Note from "../models/note.model.js";
+
 //[GET] /
 export const home = async (_, res) => {
     try {
@@ -72,7 +74,10 @@ export const login = async (req, res) => {
                 success: false,
             });
         }
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email }).populate({
+            path: "featuredNote",
+            select: "content"
+        });
         if (!user) {
             return res.status(400).json({
                 message: "Kiểm tra lại Email hoặc Password",
@@ -99,6 +104,7 @@ export const login = async (req, res) => {
             following: user.following,
             posts: user.posts,
             bookmarks: user.bookmarks,
+            featuredNote: user.featuredNote ? user.featuredNote.content : "",
         }
         //Tạo token - tham số đầu tiên là payload, tham số thứ 2 là secret key
         const token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
@@ -117,7 +123,7 @@ export const login = async (req, res) => {
     }
 }
 //[GET] /api/user/logout
-export const logout = async (req, res) => {
+export const logout = async (_, res) => {
     try {
         return res.clearCookie("token", "", { maxAge: 0 }).json({
             message: "Đăng xuất thành công",
@@ -129,11 +135,15 @@ export const logout = async (req, res) => {
 }
 //[GET] /api/:id
 //lấy thông tin trang cá nhân
-export const getProfile = async (_, res) => {
+export const getProfile = async (req, res) => {
     try {
-        const userId = res.params.id;
-        const user = await User.findById(userId).select("-password");
-
+        const userId = req.params.id;
+        console.log(userId)
+        const user = await User.findById(userId).select("-password").populate({
+            path: "featuredNote",
+            select: "content"
+        });
+        console.log(user)
         return res.status(200).json({
             success: true,
             user,
@@ -205,7 +215,12 @@ export const followOrUnfollow = async (req, res) => {
     try {
         const followKrneWala = req.id; // Người thực hiện hành động
         const jiskoFollowKrunga = req.params.id; // Người được theo dõi hoặc hủy theo dõi
-
+        if (followKrneWala === jiskoFollowKrunga) {
+            return res.status(400).json({
+                message: 'Không thể theo dõi chính mình',
+                success: false,
+            });
+        }
         // Tìm người dùng theo dõi và người dùng được theo dõi
         const user = await User.findById(followKrneWala);
         const targetUser = await User.findById(jiskoFollowKrunga);
@@ -262,3 +277,116 @@ export const followOrUnfollow = async (req, res) => {
         });
     }
 };
+//[DELETE] /api/user/deleteAvatar
+export const deleteAvatar = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findById(userId).select("profilePicture");
+        if (!user) {
+            return res.status(404).json({
+                message: "Không tìm thấy user",
+                success: false,
+            });
+        }
+        user.profilePicture = "https://www.kindpng.com/picc/m/22-223863_no-avatar-png-circle-transparent-png.png";
+        await user.save();
+        return res.status(200).json({
+            message: "Xóa ảnh đại diện thành công",
+            success: true,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+//[POST] /api/user/featuredNote
+export const postFeaturedNote = async (req, res) => {
+    try {
+        const userId = req.id;
+        const { featuredNote } = req.body;
+
+        // Kiểm tra xem user có tồn tại không
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "Không tìm thấy user",
+                success: false,
+            });
+        }
+
+        // Kiểm tra nếu không có nội dung
+        if (!featuredNote || featuredNote.trim() === '') {
+            return res.status(400).json({
+                message: "Vui lòng điền featured note",
+                success: false,
+            });
+        }
+
+        // Kiểm tra độ dài của nội dung
+        if (featuredNote.length > 60) {
+            return res.status(400).json({
+                message: "Featured note không được quá 60 ký tự",
+                success: false,
+            });
+        }
+
+        const note = await Note.create({ content: featuredNote, author: userId });
+        await note.save();
+        user.featuredNote = note._id;
+        await user.save();
+
+
+        return res.status(200).json({
+            message: "Cập nhật featured note thành công",
+            success: true,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Có lỗi xảy ra khi cập nhật featured note",
+            success: false,
+        });
+    }
+};
+//[GET] /api/user/followers/:id
+export const getFollowers = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "Không tìm thấy user",
+                success: false,
+            });
+        }
+        const followers = await User.find({ _id: { $in: user.followers } }).select("-password");
+        return res.status(200).json({
+            success: true,
+            followers,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+//[GET] /api/user/following/:id
+export const getFollowing = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "Không tìm thấy user",
+                success: false,
+            });
+        }
+        const following = await User.find({ _id: { $in: user.following } }).select("-password");
+        return res.status(200).json({
+            success: true,
+            following,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
