@@ -91,8 +91,8 @@ export const getAllPosts = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
-//lấy bài viết của user
-export const getUserPosts = async (req, res) => {
+//lấy bài viết của mình
+export const getMyPosts = async (req, res) => {
     try {
         const authorId = req.id;
         const posts = await Post.find({ author: authorId }).sort({ createdAt: -1 })
@@ -322,5 +322,28 @@ export const bookmarkPost = async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+    }
+}
+//[GET] /api/posts/getUserPosts/:id
+export const getUserPosts = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const posts = await Post.find({ author: userId }).sort({ createdAt: -1 })
+            .populate({ path: 'author', select: 'username, profilePicture' })
+            .populate({
+                path: 'comments',
+                sort: { createdAt: -1 },
+                populate: {
+                    path: 'author',
+                    select: 'username, profilePicture'
+                }
+            })
+            .populate({ path: 'likes', select: 'username' });
+        return res.status(200).json({
+            success: true,
+            posts
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 }
